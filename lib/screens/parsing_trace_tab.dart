@@ -37,11 +37,7 @@ class ParsingTraceTab extends StatelessWidget {
       decoration: BoxDecoration(
         color: accepted ? AppTheme.matchGreen : AppTheme.errorRed,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: accepted
-              ? AppTheme.accent.withOpacity(0.4)
-              : AppTheme.error.withOpacity(0.3),
-        ),
+        border: Border.all(color: accepted ? AppTheme.accent.withOpacity(0.4) : AppTheme.error.withOpacity(0.3)),
       ),
       child: Row(
         children: [
@@ -57,7 +53,8 @@ class ParsingTraceTab extends StatelessWidget {
                   ? 'String "${result!.inputString}" is ACCEPTED by the grammar.'
                   : 'String "${result!.inputString}" is REJECTED — parsing error.',
               style: GoogleFonts.inter(
-                fontSize: 13, fontWeight: FontWeight.w600,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
                 color: accepted ? AppTheme.accent : AppTheme.error,
               ),
             ),
@@ -82,16 +79,16 @@ class ParsingTraceTab extends StatelessWidget {
 
   Widget _infoChip(String label, String value, Color bg, Color fg) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-    decoration: BoxDecoration(
-      color: bg, borderRadius: BorderRadius.circular(8),
-    ),
+    decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(8)),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
+        Text(
+          label,
           style: GoogleFonts.inter(fontSize: 11, color: fg, fontWeight: FontWeight.w600),
         ),
-        Text(value,
+        Text(
+          value,
           style: GoogleFonts.jetBrainsMono(fontSize: 14, color: fg, fontWeight: FontWeight.w700),
         ),
       ],
@@ -108,18 +105,13 @@ class ParsingTraceTab extends StatelessWidget {
             children: [
               Container(
                 padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: AppTheme.primaryLight, borderRadius: BorderRadius.circular(6),
-                ),
-                child: const Icon(Icons.list_alt_rounded,
-                  color: AppTheme.primary, size: 16),
+                decoration: BoxDecoration(color: AppTheme.primaryLight, borderRadius: BorderRadius.circular(6)),
+                child: const Icon(Icons.list_alt_rounded, color: AppTheme.primary, size: 16),
               ),
               const SizedBox(width: 10),
-              Text('Step-by-Step Trace',
-                style: GoogleFonts.inter(
-                  fontSize: 14, fontWeight: FontWeight.w700,
-                  color: AppTheme.textPrimary,
-                ),
+              Text(
+                'Step-by-Step Trace',
+                style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w700, color: AppTheme.textPrimary),
               ),
             ],
           ),
@@ -133,12 +125,7 @@ class ParsingTraceTab extends StatelessWidget {
               columnSpacing: 16,
               horizontalMargin: 12,
               border: TableBorder.all(color: AppTheme.border, width: 1),
-              columns: [
-                _col('#'),
-                _col('Stack'),
-                _col('Input'),
-                _col('Action'),
-              ],
+              columns: [_col('#'), _col('Stack'), _col('Input'), _col('Action')],
               rows: result!.parseSteps.asMap().entries.map((e) {
                 return _traceRow(e.key + 1, e.value);
               }).toList(),
@@ -150,10 +137,9 @@ class ParsingTraceTab extends StatelessWidget {
   );
 
   DataColumn _col(String label) => DataColumn(
-    label: Text(label,
-      style: GoogleFonts.inter(
-        fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.textSecond,
-      ),
+    label: Text(
+      label,
+      style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.textSecond),
     ),
   );
 
@@ -179,24 +165,24 @@ class ParsingTraceTab extends StatelessWidget {
     return DataRow(
       color: WidgetStateProperty.all(rowColor),
       cells: [
-        DataCell(Text('$index',
-          style: GoogleFonts.inter(
-            fontSize: 12, color: AppTheme.textSecond, fontWeight: FontWeight.w500,
+        DataCell(
+          Text(
+            '$index',
+            style: GoogleFonts.inter(fontSize: 12, color: AppTheme.textSecond, fontWeight: FontWeight.w500),
           ),
-        )),
-        DataCell(Text(
-          step.stack.reversed.join(' '),
-          style: GoogleFonts.jetBrainsMono(fontSize: 12, color: AppTheme.textPrimary),
-        )),
-        DataCell(Text(
-          step.input.join(' '),
-          style: GoogleFonts.jetBrainsMono(fontSize: 12, color: AppTheme.textPrimary),
-        )),
-        DataCell(Text(action,
-          style: GoogleFonts.inter(
-            fontSize: 12, color: actionColor, fontWeight: FontWeight.w600,
+        ),
+        DataCell(
+          Text(step.stack.join(' '), style: GoogleFonts.jetBrainsMono(fontSize: 12, color: AppTheme.textPrimary)),
+        ),
+        DataCell(
+          Text(step.input.join(' '), style: GoogleFonts.jetBrainsMono(fontSize: 12, color: AppTheme.textPrimary)),
+        ),
+        DataCell(
+          Text(
+            action,
+            style: GoogleFonts.inter(fontSize: 12, color: actionColor, fontWeight: FontWeight.w600),
           ),
-        )),
+        ),
       ],
     );
   }
@@ -207,17 +193,20 @@ class ParsingTraceTab extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Color Legend',
-            style: GoogleFonts.inter(
-              fontSize: 14, fontWeight: FontWeight.w700,
-              color: AppTheme.textPrimary,
-            ),
+          Text(
+            'Color Legend',
+            style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w700, color: AppTheme.textPrimary),
           ),
           const SizedBox(height: 10),
-          _legendRow(AppTheme.applyBlue,  AppTheme.primary, 'Match', 'Terminal on stack matches lookahead — pop & advance'),
-          _legendRow(Colors.white,        AppTheme.textPrimary, 'Apply', 'Expand non-terminal using table entry'),
+          _legendRow(
+            AppTheme.applyBlue,
+            AppTheme.primary,
+            'Match',
+            'Terminal on stack matches lookahead — pop & advance',
+          ),
+          _legendRow(Colors.white, AppTheme.textPrimary, 'Apply', 'Expand non-terminal using table entry'),
           _legendRow(AppTheme.matchGreen, AppTheme.accent, 'Accept', 'Stack and input both empty — string accepted'),
-          _legendRow(AppTheme.errorRed,   AppTheme.error, 'Error', 'No table entry or terminal mismatch'),
+          _legendRow(AppTheme.errorRed, AppTheme.error, 'Error', 'No table entry or terminal mismatch'),
         ],
       ),
     ),
@@ -228,22 +217,21 @@ class ParsingTraceTab extends StatelessWidget {
     child: Row(
       children: [
         Container(
-          width: 12, height: 12,
+          width: 12,
+          height: 12,
           decoration: BoxDecoration(
-            color: bg, borderRadius: BorderRadius.circular(3),
+            color: bg,
+            borderRadius: BorderRadius.circular(3),
             border: Border.all(color: AppTheme.border),
           ),
         ),
         const SizedBox(width: 8),
-        Text('$label — ',
-          style: GoogleFonts.inter(
-            fontSize: 12, fontWeight: FontWeight.w600, color: fg,
-          ),
+        Text(
+          '$label — ',
+          style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: fg),
         ),
         Expanded(
-          child: Text(desc,
-            style: GoogleFonts.inter(fontSize: 12, color: AppTheme.textSecond),
-          ),
+          child: Text(desc, style: GoogleFonts.inter(fontSize: 12, color: AppTheme.textSecond)),
         ),
       ],
     ),
@@ -257,12 +245,14 @@ class ParsingTraceTab extends StatelessWidget {
         children: [
           const Icon(Icons.block_rounded, size: 48, color: AppTheme.error),
           const SizedBox(height: 12),
-          Text('Cannot parse — grammar is not LL(1)',
+          Text(
+            'Cannot parse — grammar is not LL(1)',
             textAlign: TextAlign.center,
             style: GoogleFonts.inter(fontSize: 15, color: AppTheme.error),
           ),
           const SizedBox(height: 8),
-          Text('Check the Parsing Table tab for conflicts.',
+          Text(
+            'Check the Parsing Table tab for conflicts.',
             textAlign: TextAlign.center,
             style: GoogleFonts.inter(fontSize: 13, color: AppTheme.textSecond),
           ),
@@ -277,9 +267,7 @@ class ParsingTraceTab extends StatelessWidget {
       children: [
         Icon(Icons.list_alt_outlined, size: 48, color: AppTheme.border),
         const SizedBox(height: 12),
-        Text('Run analysis first',
-          style: GoogleFonts.inter(fontSize: 15, color: AppTheme.textSecond),
-        ),
+        Text('Run analysis first', style: GoogleFonts.inter(fontSize: 15, color: AppTheme.textSecond)),
       ],
     ),
   );

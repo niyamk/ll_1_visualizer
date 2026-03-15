@@ -5,25 +5,30 @@ import '../models/analysis_result.dart';
 
 class InputTab extends StatefulWidget {
   final void Function(AnalysisResult) onAnalyze;
+  final TextEditingController grammarController;
+  final TextEditingController inputController;
 
-  const InputTab({super.key, required this.onAnalyze});
+  const InputTab({super.key, required this.onAnalyze, required this.grammarController, required this.inputController});
 
   @override
   State<InputTab> createState() => _InputTabState();
 }
 
 class _InputTabState extends State<InputTab> {
-  final _grammarController = TextEditingController(
-    text: 'E -> E + T | T\nT -> T * F | F\nF -> ( E ) | id',
-  );
-  final _inputController = TextEditingController(text: 'id + id * id');
+  // final _grammarController = TextEditingController(
+  //   text: 'E -> E + T | T\nT -> T * F | F\nF -> ( E ) | id',
+  // );
+  // final _inputController = TextEditingController(text: 'id + id * id');
   String? _error;
   bool _loading = false;
 
   void _analyze() {
-    setState(() { _error = null; _loading = true; });
+    setState(() {
+      _error = null;
+      _loading = true;
+    });
 
-    final lines = _grammarController.text
+    final lines = widget.grammarController.text
         .split('\n')
         .map((l) => l.trim())
         .where((l) => l.isNotEmpty && l.contains('->'))
@@ -38,7 +43,7 @@ class _InputTabState extends State<InputTab> {
     }
 
     try {
-      final result = runAnalysis(lines, _inputController.text.trim());
+      final result = runAnalysis(lines, widget.inputController.text.trim());
       setState(() => _loading = false);
       widget.onAnalyze(result);
     } catch (e) {
@@ -64,6 +69,24 @@ class _InputTabState extends State<InputTab> {
           const SizedBox(height: 12),
           _grammarField(),
           const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: () {
+                final controller = widget.grammarController;
+                final text = controller.text;
+                final selection = controller.selection;
+                final newText = text.replaceRange(selection.start, selection.end, 'ε');
+                controller.value = TextEditingValue(
+                  text: newText,
+                  selection: TextSelection.collapsed(offset: selection.start + 1),
+                );
+              },
+              icon: const Text('ε', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              label: const Text('Insert ε'),
+              style: TextButton.styleFrom(foregroundColor: AppTheme.primary),
+            ),
+          ),
           _hint('Example: E -> E + T | T   or   E -> E + T then E -> T on next line'),
           const SizedBox(height: 24),
           _sectionHeader(
@@ -73,29 +96,23 @@ class _InputTabState extends State<InputTab> {
           ),
           const SizedBox(height: 12),
           TextField(
-            controller: _inputController,
+            controller: widget.inputController,
             style: GoogleFonts.jetBrainsMono(fontSize: 15),
-            decoration: const InputDecoration(
-              hintText: 'e.g.  id + id * id',
-            ),
+            decoration: const InputDecoration(hintText: 'e.g.  id + id * id'),
           ),
           const SizedBox(height: 8),
           _hint('Tokens are matched against grammar terminals automatically.'),
           const SizedBox(height: 32),
-          if (_error != null) ...[
-            _errorBanner(_error!),
-            const SizedBox(height: 16),
-          ],
+          if (_error != null) ...[_errorBanner(_error!), const SizedBox(height: 16)],
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
               onPressed: _loading ? null : _analyze,
               icon: _loading
                   ? const SizedBox(
-                      width: 18, height: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2, color: Colors.white,
-                      ),
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                     )
                   : const Icon(Icons.play_arrow_rounded),
               label: Text(_loading ? 'Analyzing...' : 'Run LL(1) Analysis'),
@@ -109,7 +126,7 @@ class _InputTabState extends State<InputTab> {
   }
 
   Widget _grammarField() => TextField(
-    controller: _grammarController,
+    controller: widget.grammarController,
     maxLines: 6,
     style: GoogleFonts.jetBrainsMono(fontSize: 14),
     decoration: const InputDecoration(
@@ -118,19 +135,12 @@ class _InputTabState extends State<InputTab> {
     ),
   );
 
-  Widget _sectionHeader({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-  }) => Row(
+  Widget _sectionHeader({required IconData icon, required String title, required String subtitle}) => Row(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       Container(
         padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: AppTheme.primaryLight,
-          borderRadius: BorderRadius.circular(8),
-        ),
+        decoration: BoxDecoration(color: AppTheme.primaryLight, borderRadius: BorderRadius.circular(8)),
         child: Icon(icon, color: AppTheme.primary, size: 20),
       ),
       const SizedBox(width: 12),
@@ -138,18 +148,12 @@ class _InputTabState extends State<InputTab> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title,
-              style: GoogleFonts.inter(
-                fontSize: 15, fontWeight: FontWeight.w700,
-                color: AppTheme.textPrimary,
-              ),
+            Text(
+              title,
+              style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w700, color: AppTheme.textPrimary),
             ),
             const SizedBox(height: 2),
-            Text(subtitle,
-              style: GoogleFonts.inter(
-                fontSize: 13, color: AppTheme.textSecond,
-              ),
-            ),
+            Text(subtitle, style: GoogleFonts.inter(fontSize: 13, color: AppTheme.textSecond)),
           ],
         ),
       ),
@@ -161,9 +165,7 @@ class _InputTabState extends State<InputTab> {
       const Icon(Icons.info_outline, size: 14, color: AppTheme.textSecond),
       const SizedBox(width: 6),
       Expanded(
-        child: Text(text,
-          style: GoogleFonts.inter(fontSize: 12, color: AppTheme.textSecond),
-        ),
+        child: Text(text, style: GoogleFonts.inter(fontSize: 12, color: AppTheme.textSecond)),
       ),
     ],
   );
@@ -180,9 +182,7 @@ class _InputTabState extends State<InputTab> {
         const Icon(Icons.error_outline, color: AppTheme.error, size: 18),
         const SizedBox(width: 10),
         Expanded(
-          child: Text(msg,
-            style: GoogleFonts.inter(fontSize: 13, color: AppTheme.error),
-          ),
+          child: Text(msg, style: GoogleFonts.inter(fontSize: 13, color: AppTheme.error)),
         ),
       ],
     ),
@@ -194,11 +194,9 @@ class _InputTabState extends State<InputTab> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('LL(1) Analysis Pipeline',
-            style: GoogleFonts.inter(
-              fontSize: 14, fontWeight: FontWeight.w700,
-              color: AppTheme.textPrimary,
-            ),
+          Text(
+            'LL(1) Analysis Pipeline',
+            style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w700, color: AppTheme.textPrimary),
           ),
           const SizedBox(height: 12),
           ..._pipelineSteps.map((s) => _pipelineRow(s.$1, s.$2, s.$3)),
@@ -208,10 +206,10 @@ class _InputTabState extends State<InputTab> {
   );
 
   static const _pipelineSteps = [
-    (Icons.refresh_rounded,    'Left Recursion Removal',   'Eliminates infinite loops in top-down parsing'),
-    (Icons.calculate_outlined, 'FIRST & FOLLOW Sets',      'Computes lookahead information for each non-terminal'),
-    (Icons.table_chart_outlined,'LL(1) Parsing Table',     'Builds the predictive parsing table'),
-    (Icons.list_alt_outlined,  'Parsing Trace',            'Simulates the stack-based parse step by step'),
+    (Icons.refresh_rounded, 'Left Recursion Removal', 'Eliminates infinite loops in top-down parsing'),
+    (Icons.calculate_outlined, 'FIRST & FOLLOW Sets', 'Computes lookahead information for each non-terminal'),
+    (Icons.table_chart_outlined, 'LL(1) Parsing Table', 'Builds the predictive parsing table'),
+    (Icons.list_alt_outlined, 'Parsing Trace', 'Simulates the stack-based parse step by step'),
   ];
 
   Widget _pipelineRow(IconData icon, String title, String desc) => Padding(
@@ -225,17 +223,11 @@ class _InputTabState extends State<InputTab> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title,
-                style: GoogleFonts.inter(
-                  fontSize: 13, fontWeight: FontWeight.w600,
-                  color: AppTheme.textPrimary,
-                ),
+              Text(
+                title,
+                style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textPrimary),
               ),
-              Text(desc,
-                style: GoogleFonts.inter(
-                  fontSize: 12, color: AppTheme.textSecond,
-                ),
-              ),
+              Text(desc, style: GoogleFonts.inter(fontSize: 12, color: AppTheme.textSecond)),
             ],
           ),
         ),

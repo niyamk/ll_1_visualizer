@@ -85,8 +85,17 @@ class LeftRecursionRemover {
         return [...beta, prime];
       }).toList();
 
+      // Filter out recursive alternatives where alpha is empty (T -> T case)
+      final validRecursive = recursive.where((alpha) => alpha.sublist(1).isNotEmpty).toList();
+
+      if (validRecursive.isEmpty) {
+        // All recursive alternatives had empty alpha — just keep non-recursive
+        prods[ai] = nonRecursive;
+        continue;
+      }
+
       prods[prime] = [
-        ...recursive.map((alpha) => [...alpha.sublist(1), prime]),
+        ...validRecursive.map((alpha) => [...alpha.sublist(1), prime]),
         ['ε'],
       ];
       order.add(prime);

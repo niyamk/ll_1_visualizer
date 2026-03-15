@@ -35,15 +35,23 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
+  final _grammarController = TextEditingController(
+    text: 'E -> E + T | T\nT -> T * F | F\nF -> ( E ) | id'
+  );
+  final _inputController = TextEditingController(text: 'id + id * id');
+
   late TabController _tabController;
   AnalysisResult? _result;
 
   static const _tabs = [
-    Tab(icon: Icon(Icons.edit_note_rounded,    size: 18), text: 'Input'),
-    Tab(icon: Icon(Icons.refresh_rounded,      size: 18), text: 'Left Recursion'),
-    Tab(icon: Icon(Icons.calculate_outlined,   size: 18), text: 'First & Follow'),
-    Tab(icon: Icon(Icons.table_chart_outlined, size: 18), text: 'Parsing Table'),
-    Tab(icon: Icon(Icons.list_alt_outlined,    size: 18), text: 'Trace'),
+    Tab(icon: Icon(Icons.edit_note_rounded, size: 18), text: 'Input'),
+    Tab(icon: Icon(Icons.refresh_rounded, size: 18), text: 'Left Recursion'),
+    Tab(icon: Icon(Icons.calculate_outlined, size: 18), text: 'First & Follow'),
+    Tab(
+      icon: Icon(Icons.table_chart_outlined, size: 18),
+      text: 'Parsing Table',
+    ),
+    Tab(icon: Icon(Icons.list_alt_outlined, size: 18), text: 'Trace'),
   ];
 
   @override
@@ -54,7 +62,9 @@ class _HomeScreenState extends State<HomeScreen>
 
   @override
   void dispose() {
-    _tabController.dispose();
+     _tabController.dispose();
+  _grammarController.dispose();   // add this
+  _inputController.dispose(); 
     super.dispose();
   }
 
@@ -76,22 +86,29 @@ class _HomeScreenState extends State<HomeScreen>
                 color: AppTheme.primary,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(Icons.account_tree_rounded,
-                color: Colors.white, size: 18),
+              child: const Icon(
+                Icons.account_tree_rounded,
+                color: Colors.white,
+                size: 18,
+              ),
             ),
             const SizedBox(width: 10),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('LL(1) Visualizer',
+                Text(
+                  'LL(1) Visualizer',
                   style: GoogleFonts.inter(
-                    fontSize: 16, fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
                     color: AppTheme.textPrimary,
                   ),
                 ),
-                Text('Compiler Design — Syntax Analysis',
+                Text(
+                  'Compiler Design — Syntax Analysis',
                   style: GoogleFonts.inter(
-                    fontSize: 11, color: AppTheme.textSecond,
+                    fontSize: 11,
+                    color: AppTheme.textSecond,
                     fontWeight: FontWeight.w400,
                   ),
                 ),
@@ -118,7 +135,8 @@ class _HomeScreenState extends State<HomeScreen>
         controller: _tabController,
         physics: const NeverScrollableScrollPhysics(),
         children: [
-          InputTab(onAnalyze: _onAnalyze),
+          InputTab(onAnalyze: _onAnalyze, grammarController: _grammarController,   
+  inputController: _inputController, ),
           LeftRecursionTab(result: _result),
           FirstFollowTab(result: _result),
           ParsingTableTab(result: _result),
