@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../app_theme.dart';
 import '../models/analysis_result.dart';
+import '../core/first_follow.dart';
 
 class FirstFollowTab extends StatelessWidget {
   final AnalysisResult? result;
@@ -23,6 +24,8 @@ class FirstFollowTab extends StatelessWidget {
             iconColor: AppTheme.primary,
             sets: result!.first,
             nts: result!.nonTerminals,
+            setType: 'FIRST',
+            result: result,
           ),
           const SizedBox(height: 16),
           _setCard(
@@ -33,6 +36,8 @@ class FirstFollowTab extends StatelessWidget {
             iconColor: AppTheme.accent,
             sets: result!.follow,
             nts: result!.nonTerminals,
+            setType: 'FOLLOW',
+            result: result,
           ),
           const SizedBox(height: 20),
           _rulesCard(),
@@ -49,6 +54,8 @@ class FirstFollowTab extends StatelessWidget {
     required Color iconColor,
     required Map<String, Set<String>> sets,
     required List<String> nts,
+    required String setType,
+    required AnalysisResult? result,
   }) => Card(
     child: Padding(
       padding: const EdgeInsets.all(16),
@@ -97,19 +104,24 @@ class FirstFollowTab extends StatelessWidget {
               children: [
                 _tableHeader(),
                 const Divider(height: 1),
-                ...nts.asMap().entries.map((e) => Column(
-                  children: [
-                    _tableRow(
-                      nt: e.value,
-                      tokens: (sets[e.value] ?? {}).toList()..sort(),
-                      isEven: e.key.isEven,
-                      color: color,
-                      tokenColor: iconColor,
-                    ),
-                    if (e.key < nts.length - 1)
-                      const Divider(height: 1),
-                  ],
-                )),
+                ...nts.asMap().entries.map((e) {
+                  final explanation = setType == 'FIRST'
+                      ? result?.firstExplanations[e.value]
+                      : result?.followExplanations[e.value];
+                  return Column(
+                    children: [
+                      _accordionRow(
+                        nt: e.value,
+                        tokens: (sets[e.value] ?? {}).toList()..sort(),
+                        isEven: e.key.isEven,
+                        color: color,
+                        tokenColor: iconColor,
+                        explanation: explanation,
+                      ),
+                      if (e.key < nts.length - 1) const Divider(height: 1),
+                    ],
+                  );
+                }),
               ],
             ),
           ),
@@ -141,40 +153,95 @@ class FirstFollowTab extends StatelessWidget {
     ),
   );
 
-  Widget _tableRow({
+  Widget _accordionRow({
     required String nt,
     required List<String> tokens,
     required bool isEven,
     required Color color,
     required Color tokenColor,
+    required SetExplanation? explanation,
   }) => Container(
-    color: isEven ? Colors.white : AppTheme.surface,
-    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        SizedBox(
-          width: 80,
-          child: Text(nt,
-            style: GoogleFonts.jetBrainsMono(
-              fontSize: 14, fontWeight: FontWeight.w700,
-              color: AppTheme.textPrimary,
-            ),
-          ),
-        ),
-        Expanded(
-          child: tokens.isEmpty
-              ? Text('{ }',
-                  style: GoogleFonts.jetBrainsMono(
-                    fontSize: 13, color: AppTheme.textSecond,
-                  ),
-                )
-              : Wrap(
-                  spacing: 6, runSpacing: 6,
-                  children: tokens.map((t) => _chip(t, color, tokenColor)).toList(),
+    decoration: const BoxDecoration(),
+    clipBehavior: Clip.hardEdge,
+    child: Material(
+      color: Colors.transparent,
+      child: ExpansionTile(
+        collapsedBackgroundColor: isEven ? Colors.white : AppTheme.surface,
+        backgroundColor: color.withOpacity(0.3),
+        tilePadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+        childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
+        title: Row(
+          children: [
+            SizedBox(
+              width: 70,
+              child: Text(nt,
+                style: GoogleFonts.jetBrainsMono(
+                  fontSize: 14, fontWeight: FontWeight.w700,
+                  color: AppTheme.textPrimary,
                 ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: tokens.isEmpty
+                  ? Text('{ }',
+                      style: GoogleFonts.jetBrainsMono(
+                        fontSize: 13, color: AppTheme.textSecond,
+                      ),
+                    )
+                  : Wrap(
+                      spacing: 6, runSpacing: 4,
+                      children: tokens
+                          .map((t) => _chip(t, color, tokenColor))
+                          .toList(),
+                    ),
+            ),
+          ],
         ),
-      ],
+        subtitle: Text('tap to see computation steps',
+          style: GoogleFonts.inter(fontSize: 11, color: AppTheme.textSecond),
+        ),
+        children: [
+          if (explanation != null)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: AppTheme.border),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: explanation.steps.map((step) {
+                  final isHeader = !step.startsWith(' ') && step.endsWith(':');
+                  final isEmpty  = step.trim().isEmpty;
+                  if (isEmpty) return const SizedBox(height: 6);
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Text(step,
+                      style: isHeader
+                          ? GoogleFonts.inter(
+                              fontSize: 12, fontWeight: FontWeight.w700,
+                              color: tokenColor,
+                            )
+                          : GoogleFonts.jetBrainsMono(
+                              fontSize: 12, color: AppTheme.textPrimary,
+                            ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            )
+          else
+            Padding(
+              padding: const EdgeInsets.all(8),
+              child: Text('No explanation available.',
+                style: GoogleFonts.inter(fontSize: 12, color: AppTheme.textSecond),
+              ),
+            ),
+        ],
+      ),
     ),
   );
 
@@ -260,3 +327,4 @@ class FirstFollowTab extends StatelessWidget {
     ),
   );
 }
+

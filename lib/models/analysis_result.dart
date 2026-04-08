@@ -20,6 +20,10 @@ class AnalysisResult {
   final List<Production> cleanedProductions;
   final List<String> lrSteps;
   final bool hadLeftRecursion;
+  // Add these fields to the class
+  final List<LRExplanation> lrExplanations;
+  final Map<String, SetExplanation> firstExplanations;
+  final Map<String, SetExplanation> followExplanations;
 
   // ── STEP 3: FIRST & FOLLOW ─────────────────────────────────────────────────
   final Map<String, Set<String>> first;
@@ -43,6 +47,9 @@ class AnalysisResult {
     required this.cleanedProductions,
     required this.lrSteps,
     required this.hadLeftRecursion,
+    required this.lrExplanations,
+    required this.firstExplanations,
+    required this.followExplanations,
     required this.first,
     required this.follow,
     required this.nonTerminals,
@@ -90,6 +97,9 @@ AnalysisResult runAnalysis(List<String> rawProductions, String inputString) {
     cleanedProductions:  List.from(grammar.productions),
     lrSteps:             lrr.removalSteps,
     hadLeftRecursion:    lrr.removalSteps.isNotEmpty,
+    lrExplanations:      lrr.explanations,
+    firstExplanations:   ff.firstExplanations,
+    followExplanations:  ff.followExplanations,
     first:               ff.first,
     follow:              ff.follow,
     nonTerminals:        grammar.nonTerminals
@@ -103,3 +113,4 @@ AnalysisResult runAnalysis(List<String> rawProductions, String inputString) {
     accepted:            accepted,
   );
 }
+

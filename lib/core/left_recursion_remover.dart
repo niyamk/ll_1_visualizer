@@ -1,6 +1,26 @@
 import '../models/production.dart';
 import 'grammar.dart';
 
+/// Stores the explanation for how one non-terminal's
+/// left recursion was removed.
+class LRExplanation {
+  final String nonTerminal;
+  final List<String> recursiveAlts;    // the recursive alternatives found
+  final List<String> nonRecursiveAlts; // the base case alternatives
+  final String primeSymbol;            // the new NT created (E')
+  final List<String> resultProductions; // the final productions produced
+  final List<String> steps;            // human-readable steps
+
+  LRExplanation({
+    required this.nonTerminal,
+    required this.recursiveAlts,
+    required this.nonRecursiveAlts,
+    required this.primeSymbol,
+    required this.resultProductions,
+    required this.steps,
+  });
+}
+
 /// Left Recursion Removal
 ///
 /// Handles both:
@@ -19,6 +39,7 @@ class LeftRecursionRemover {
   List<Production> result = [];
   Set<String> newNonTerminals = {};
   List<String> removalSteps = []; // for display
+  List<LRExplanation> explanations = [];
 
   LeftRecursionRemover(this.grammar);
 
@@ -26,6 +47,7 @@ class LeftRecursionRemover {
     result = [];
     newNonTerminals = {};
     removalSteps = [];
+    explanations = [];
 
     // Work with a mutable copy of productions grouped by LHS
     final Map<String, List<List<String>>> prods = {};
@@ -94,6 +116,44 @@ class LeftRecursionRemover {
         continue;
       }
 
+      // Build human-readable explanation for this non-terminal
+      final recStrs    = validRecursive.map((a) => '$ai -> ${a.join(' ')}').toList();
+      final nonRecStrs = nonRecursive.map((a) => '$ai -> ${a.join(' ')}').toList();
+      final resultStrs = <String>[
+        ...nonRecursive.map((beta) {
+          final b = (beta.length == 1 && beta[0] == 'ε') ? [] : beta;
+          return '$ai -> ${[...b, prime].join(' ')}';
+        }),
+        ...validRecursive.map((alpha) {
+          final a = alpha.sublist(1);
+          return '$prime -> ${[...a, prime].join(' ')}';
+        }),
+        '$prime -> ε',
+      ];
+
+      final steps = <String>[
+        'Step 1 — Identify recursive alternatives (start with $ai):',
+        ...recStrs.map((r) => '    $r'),
+        'Step 2 — Identify non-recursive (base) alternatives:',
+        ...nonRecStrs.map((r) => '    $r'),
+        'Step 3 — Create new non-terminal: $prime',
+        'Step 4 — Apply transformation rule:',
+        '    For each base case β:  $ai → β$prime',
+        '    For each recursive α:  $prime → α$prime',
+        '    Add:                   $prime → ε  (so $prime can disappear)',
+        'Step 5 — Resulting productions:',
+        ...resultStrs.map((r) => '    $r'),
+      ];
+
+      explanations.add(LRExplanation(
+        nonTerminal:      ai,
+        recursiveAlts:    recStrs,
+        nonRecursiveAlts: nonRecStrs,
+        primeSymbol:      prime,
+        resultProductions: resultStrs,
+        steps:            steps,
+      ));
+
       prods[prime] = [
         ...validRecursive.map((alpha) => [...alpha.sublist(1), prime]),
         ['ε'],
@@ -140,3 +200,4 @@ class LeftRecursionRemover {
     }
   }
 }
+

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../app_theme.dart';
 import '../models/analysis_result.dart';
+import '../core/left_recursion_remover.dart';
 
 class LeftRecursionTab extends StatelessWidget {
   final AnalysisResult? result;
@@ -29,13 +30,7 @@ class LeftRecursionTab extends StatelessWidget {
             const SizedBox(height: 16),
             _stepsCard(),
             const SizedBox(height: 16),
-            _productionCard(
-              title: 'After Removal',
-              icon: Icons.check_circle_outline_rounded,
-              prods: result!.cleanedProductions.map((p) => p.toString()).toList(),
-              color: AppTheme.matchGreen,
-              iconColor: AppTheme.accent,
-            ),
+            _accordionCard(),
           ],
           const SizedBox(height: 20),
           _theoryBox(),
@@ -126,6 +121,147 @@ class LeftRecursionTab extends StatelessWidget {
             ),
           )),
         ],
+      ),
+    ),
+  );
+
+  Widget _accordionCard() => Card(
+    child: Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: AppTheme.matchGreen,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: const Icon(Icons.check_circle_outline_rounded,
+                  color: AppTheme.accent, size: 16),
+              ),
+              const SizedBox(width: 10),
+              Text('After Left Recursion Removal',
+                style: GoogleFonts.inter(
+                  fontSize: 14, fontWeight: FontWeight.w700,
+                  color: AppTheme.textPrimary,
+                ),
+              ),
+              const SizedBox(width: 8),
+              // Container(
+              //   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              //   decoration: BoxDecoration(
+              //     color: AppTheme.primaryLight,
+              //     borderRadius: BorderRadius.circular(10),
+              //   ),
+              //   child: Text('tap to expand',
+              //     style: GoogleFonts.inter(
+              //       fontSize: 11, color: AppTheme.primary,
+              //     ),
+              //   ),
+              // ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ...result!.lrExplanations.map((exp) => _lrAccordionItem(exp)),
+          // Also show productions that had no left recursion (no explanation)
+          ...result!.cleanedProductions
+              .where((p) => !result!.lrExplanations
+                  .any((e) => e.resultProductions.contains(p.toString())))
+              .map((p) => Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppTheme.surface,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(p.toString(),
+                    style: GoogleFonts.jetBrainsMono(
+                      fontSize: 13, color: AppTheme.textPrimary,
+                    ),
+                  ),
+                ),
+              )),
+        ],
+      ),
+    ),
+  );
+
+  Widget _lrAccordionItem(LRExplanation exp) => Padding(
+    padding: const EdgeInsets.only(bottom: 8),
+    child: Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppTheme.border),
+      ),
+      clipBehavior: Clip.hardEdge,
+      child: Material(
+        color: Colors.transparent,
+        child: ExpansionTile(
+          collapsedBackgroundColor: AppTheme.surface,
+          backgroundColor: AppTheme.primaryLight,
+          tilePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+          leading: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: AppTheme.primary,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(exp.nonTerminal,
+              style: GoogleFonts.jetBrainsMono(
+                fontSize: 12, fontWeight: FontWeight.w700,
+                color: Colors.white,
+              ),
+            ),
+          ),
+          title: Text(
+            exp.resultProductions.take(2).join('  |  ') +
+                (exp.resultProductions.length > 2 ? '  ...' : ''),
+            style: GoogleFonts.jetBrainsMono(
+              fontSize: 12, color: AppTheme.primary,
+            ),
+          ),
+          subtitle: Text('tap to see how this was derived',
+            style: GoogleFonts.inter(fontSize: 11, color: AppTheme.textSecond),
+          ),
+          children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: exp.steps.map((step) {
+                  final isHeader = !step.startsWith(' ') && step.endsWith(':');
+                  final isEmpty  = step.trim().isEmpty;
+                  if (isEmpty) return const SizedBox(height: 6);
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Text(step,
+                      style: isHeader
+                          ? GoogleFonts.inter(
+                              fontSize: 12, fontWeight: FontWeight.w700,
+                              color: AppTheme.primary,
+                            )
+                          : GoogleFonts.jetBrainsMono(
+                              fontSize: 12, color: AppTheme.textPrimary,
+                            ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ],
+        ),
       ),
     ),
   );
@@ -234,3 +370,4 @@ class LeftRecursionTab extends StatelessWidget {
     ),
   );
 }
+
